@@ -2,12 +2,15 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"inventory/internal/routes"
 	"inventory/internal/services"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
@@ -31,7 +34,11 @@ func main() {
 
 	router := gin.Default()
 
-	router.SetHTMLTemplate(template.Must(template.ParseGlob("./public/templates/*.html")))
+	err = setupTemplates(router)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	router.Static("/static", "./public/static")
 
 	setupRoutes(router, productService, orderService)
@@ -57,14 +64,61 @@ func initializeDB(db *sql.DB) error {
 	return nil
 }
 
+func setupTemplates(router *gin.Engine) error {
+	// Set up json conversion for templates
+	funcMap := template.FuncMap{
+		"json": toJSON,
+	}
+
+	tmpl := template.New("").Funcs(funcMap)
+
+	templateFiles, err := filepath.Glob("./public/templates/*.html")
+	if err != nil {
+		return err
+	}
+
+	for _, templateFile := range templateFiles {
+		_, err = tmpl.ParseFiles(templateFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	router.SetHTMLTemplate(tmpl) // Set the parsed templates with functions to the router
+	return nil
+}
+
 func setupRoutes(router *gin.Engine, p services.ProductRepository, o services.OrderRepository) {
 	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "base.html", nil)
+		c.Redirect(http.StatusMovedPermanently, "/products")
 	})
 
-	router.GET("/about", func(c *gin.Context) {
-		log.Println("Rendering the about page")
-		c.HTML(http.StatusOK, "about.html", nil)
+	router.GET("/products", func(c *gin.Context) {
+		routes.GetProducts(c, p)
 	})
 
+	router.POST("/products", func(c *gin.Context) {
+		routes.PostProducts(c, p)
+	})
+
+	router.DELETE("/products", func(c *gin.Context) {
+		routes.DeleteProducts(c, p)
+	})
+
+	router.GET("/orders/:id", func(c *gin.Context) {
+		routes.GetOrders(c, o)
+	})
+
+	router.POST("/orders/:id", func(c *gin.Context) {
+		routes.PostOrders(c, o)
+	})
+
+	router.DELETE("/orders/:id", func(c *gin.Context) {
+		routes.DeleteOrders(c, o)
+	})
+}
+
+func toJSON(v interface{}) template.JS {
+	a, _ := json.Marshal(v)
+	return template.JS(a)
 }

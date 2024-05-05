@@ -12,6 +12,12 @@ const (
 	Returned
 )
 
+var OrderStates = []string{"Pending", "Confirmed", "Processing", "Shipped", "Delivered", "Cancelled", "Returned"}
+
+func (s OrderState) Name() string {
+	return OrderStates[s]
+}
+
 func (s OrderState) IsStockTaken() bool {
 	switch s {
 	case Pending:

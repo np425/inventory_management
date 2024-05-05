@@ -169,9 +169,14 @@ func (s *OrderService) FindByID(id uint) (models.Order, error) {
 	return order, nil
 }
 
-func (s *OrderService) List() ([]models.Order, error) {
+func (s *OrderService) FindByProductID(productID uint) ([]models.Order, error) {
+	_, err := s.productRepo.FindByID(productID)
+	if err != nil {
+		return nil, err
+	}
+
 	orders := []models.Order{}
-	rows, err := s.db.Query("SELECT id, product_id, quantity, state FROM orders")
+	rows, err := s.db.Query("SELECT id, product_id, quantity, state FROM orders WHERE product_id = ?", productID)
 	if err != nil {
 		return nil, err
 	}
