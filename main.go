@@ -88,7 +88,7 @@ func setupTemplates(router *gin.Engine) error {
 	return nil
 }
 
-func setupRoutes(router *gin.Engine, p services.ProductRepository, o services.OrderRepository) {
+func setupRoutes(router *gin.Engine, p services.ProductServicable, o services.OrderServicable) {
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/products")
 	})

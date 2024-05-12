@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetOrders(c *gin.Context, o services.OrderRepository) {
+func GetOrders(c *gin.Context, o services.OrderServicable) {
 	productID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Error(err)
@@ -30,7 +30,7 @@ func GetOrders(c *gin.Context, o services.OrderRepository) {
 	})
 }
 
-func PostOrders(c *gin.Context, o services.OrderRepository) {
+func PostOrders(c *gin.Context, o services.OrderServicable) {
 	defer c.Redirect(http.StatusFound, c.Request.URL.Path)
 
 	productID, err := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -58,20 +58,20 @@ func PostOrders(c *gin.Context, o services.OrderRepository) {
 
 	if id <= 0 {
 		order := models.Order{ProductID: uint(productID), Quantity: uint(quantity), State: models.OrderState(state)}
-		_, err = o.Create(order)
+		err = o.Create(&order)
 		if err != nil {
 			c.Error(err)
 		}
 	} else {
 		order := models.Order{ID: uint(id), ProductID: uint(productID), Quantity: uint(quantity), State: models.OrderState(state)}
-		_, err = o.Update(order)
+		err = o.Update(&order)
 		if err != nil {
 			c.Error(err)
 		}
 	}
 }
 
-func DeleteOrders(c *gin.Context, o services.OrderRepository) {
+func DeleteOrders(c *gin.Context, o services.OrderServicable) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.Error(err)
@@ -84,8 +84,7 @@ func DeleteOrders(c *gin.Context, o services.OrderRepository) {
 		return
 	}
 
-	order := models.Order{ID: uint(id)}
-	_, err = o.Delete(order)
+	err = o.Delete(uint(id))
 	if err != nil {
 		c.Error(err)
 		return

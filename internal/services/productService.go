@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"inventory/internal/models"
-	"log"
 )
 
 type ProductService struct {
@@ -15,57 +14,52 @@ func NewProductService(db *sql.DB) *ProductService {
 	return &ProductService{db: db}
 }
 
-func (s *ProductService) Create(p models.Product) (models.Product, error) {
+func (s *ProductService) Create(p *models.Product) error {
 	query := `INSERT INTO products (name, stock_quantity) VALUES (?, ?)`
 
 	result, err := s.db.Exec(query, p.Name, p.StockQuantity)
 	if err != nil {
-		log.Printf("Error creating product: %v", err)
-		return models.Product{}, fmt.Errorf("error creating product: %w", err)
+		return fmt.Errorf("error creating product: %w", err)
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		log.Printf("Error getting last insert ID: %v", err)
-		return models.Product{}, fmt.Errorf("error getting last insert ID: %w", err)
+		return fmt.Errorf("error getting last insert ID: %w", err)
 	}
 
 	p.ID = uint(id)
-	return p, nil
+	return nil
 }
 
-func (s *ProductService) Update(p models.Product) (models.Product, error) {
+func (s *ProductService) Update(p *models.Product) error {
 	query := `UPDATE products SET name=?, stock_quantity=? WHERE id=?`
 
 	_, err := s.db.Exec(query, p.Name, p.StockQuantity, p.ID)
 	if err != nil {
-		log.Printf("Error updating product: %v", err)
-		return models.Product{}, fmt.Errorf("error updating product: %w", err)
+		return fmt.Errorf("error updating product: %w", err)
 	}
 
-	return p, nil
+	return nil
 }
 
-func (s *ProductService) Delete(p models.Product) (models.Product, error) {
+func (s *ProductService) Delete(id uint) error {
 	query := `DELETE FROM products WHERE id=?`
 
-	result, err := s.db.Exec(query, p.ID)
+	result, err := s.db.Exec(query, id)
 	if err != nil {
-		log.Printf("Error deleting product: %v", err)
-		return models.Product{}, fmt.Errorf("error deleting product: %w", err)
+		return fmt.Errorf("error deleting product: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Printf("Error checking rows affected after deleting product: %v", err)
-		return models.Product{}, fmt.Errorf("error checking rows affected after deleting product: %w", err)
+		return fmt.Errorf("error checking rows affected after deleting product: %w", err)
 	}
 
 	if rowsAffected == 0 {
-		return models.Product{}, fmt.Errorf("no product found with ID %d", p.ID)
+		return fmt.Errorf("no product found with ID %d", id)
 	}
 
-	return p, nil
+	return nil
 }
 
 func (s *ProductService) FindByID(id uint) (models.Product, error) {
@@ -77,10 +71,8 @@ func (s *ProductService) FindByID(id uint) (models.Product, error) {
 	err := row.Scan(&product.ID, &product.Name, &product.StockQuantity)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("No product found with ID: %v", id)
 			return models.Product{}, fmt.Errorf("no product found with ID %d", id)
 		}
-		log.Printf("Error finding product: %v", err)
 		return models.Product{}, fmt.Errorf("error finding product: %w", err)
 	}
 
@@ -98,7 +90,6 @@ func (s *ProductService) List() ([]models.Product, error) {
 	for rows.Next() {
 		var p models.Product
 		if err := rows.Scan(&p.ID, &p.Name, &p.StockQuantity); err != nil {
-			log.Println("Failed to scan row:", err)
 			continue
 		}
 		products = append(products, p)

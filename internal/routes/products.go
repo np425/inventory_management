@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetProducts(c *gin.Context, p services.ProductRepository) {
+func GetProducts(c *gin.Context, p services.ProductServicable) {
 	products, err := p.List()
 	if err != nil {
 		c.Error(err)
@@ -23,7 +23,7 @@ func GetProducts(c *gin.Context, p services.ProductRepository) {
 	})
 }
 
-func PostProducts(c *gin.Context, p services.ProductRepository) {
+func PostProducts(c *gin.Context, p services.ProductServicable) {
 	defer c.Redirect(http.StatusFound, "/products")
 
 	name := c.PostForm("name")
@@ -40,20 +40,20 @@ func PostProducts(c *gin.Context, p services.ProductRepository) {
 
 	if id <= 0 {
 		product := models.Product{Name: name, StockQuantity: uint(stockQuantity)}
-		_, err = p.Create(product)
+		err = p.Create(&product)
 		if err != nil {
 			c.Error(err)
 		}
 	} else {
 		product := models.Product{ID: uint(id), Name: name, StockQuantity: uint(stockQuantity)}
-		_, err = p.Update(product)
+		err = p.Update(&product)
 		if err != nil {
 			c.Error(err)
 		}
 	}
 }
 
-func DeleteProducts(c *gin.Context, p services.ProductRepository) {
+func DeleteProducts(c *gin.Context, p services.ProductServicable) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.Error(err)
@@ -66,8 +66,7 @@ func DeleteProducts(c *gin.Context, p services.ProductRepository) {
 		return
 	}
 
-	product := models.Product{ID: uint(id)}
-	_, err = p.Delete(product)
+	err = p.Delete(uint(id))
 	if err != nil {
 		c.Error(err)
 		return
