@@ -47,8 +47,7 @@ func PostOrders(c *gin.Context, o services.OrderServicable) {
 
 	state, err := strconv.ParseUint(c.PostForm("state"), 10, 32)
 	if err != nil {
-		c.Error(err)
-		return
+		state = uint64(models.Pending)
 	}
 
 	id, err := strconv.Atoi(c.PostForm("id"))

@@ -51,11 +51,9 @@
                                 <label for="orderQuantity" class="form-label">Quantity</label>
                                 <input type="number" class="form-control" id="orderQuantity" name="quantity" required>
                             </div>
-                            <div class="mb-3">
-                                <!-- TODO: Dropdown -->
+                            <div class="mb-3 d-none" id="stateSelection">
                                 <label for="orderState" class="form-label">State</label>
-                                <!-- <input type="number" class="form-control" id="orderState" name="state" required> -->
-                                <select id="orderState" name="state" class="form-select" aria-label="Default select example">
+                                <select id="orderState" name="state" class="form-select">
                                     {{ range $index, $state := .States }}
                                     <option value="{{ $index }}">{{ $state }}</option>
                                     {{ end }}
@@ -80,6 +78,15 @@
         var orders = {{json .Orders}};
         var currentOrder = null;
 
+        function toggleStateSelection(id) {
+            var stateSelection = document.getElementById("stateSelection");
+            if (id == -1) {
+                stateSelection.classList.add("d-none");
+            } else {
+                stateSelection.classList.remove("d-none");
+            }
+        }
+
         function editOrder(id) {
             if (id != -1) {
                 let order = orders.find(p => p.id == id);
@@ -95,6 +102,8 @@
             document.getElementById("orderId").value = currentOrder?.id ?? -1;
             document.getElementById("orderQuantity").value = currentOrder?.quantity ?? "";
             document.getElementById("orderState").value = currentOrder?.state ?? "";
+
+            toggleStateSelection(id);
         }
 
         function deleteOrder(id) {
