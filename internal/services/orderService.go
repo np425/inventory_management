@@ -34,7 +34,7 @@ func (s *OrderService) Create(o *models.Order) error {
 
 	// Insert the order
 	query := `INSERT INTO orders (product_id, quantity, state) VALUES (?, ?, ?)`
-	result, err := tx.Exec(query, o.ProductID, o.Quantity, o.State)
+	result, err := tx.Exec(query, o.ProductID, o.Quantity, models.Pending)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("error creating order: %w", err)
@@ -82,11 +82,6 @@ func (s *OrderService) Update(o *models.Order) error {
 		return fmt.Errorf("error updating order: %w", err)
 	}
 
-	if err = tx.Commit(); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
 	deltaStockQuantity := stockQuantityChange(existingOrder, *o)
 	if deltaStockQuantity != 0 {
 		product, err := s.productService.FindByID(o.ProductID)
@@ -108,6 +103,11 @@ func (s *OrderService) Update(o *models.Order) error {
 		}
 
 		product.StockQuantity = uint(newStock)
+	}
+
+	if err = tx.Commit(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
