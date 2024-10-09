@@ -43,7 +43,13 @@ func main() {
 
 	setupRoutes(router, productService, orderService)
 
-	err = router.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Println("INFO: No PORT environment variable detected, defaulting to 8080")
+	}
+
+	err = router.Run(":" + port)
 	if err != nil {
 		log.Fatalf("Failed to start server %v", err)
 	}
