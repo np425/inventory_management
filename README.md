@@ -1,3 +1,6 @@
+# Inventory Management
+Simple Golang CRUD app
+
 ## Running
 1. Install [golang](https://go.dev/dl/) if not yet done
 2. In terminal: `go run main.go`
